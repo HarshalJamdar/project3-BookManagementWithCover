@@ -21,7 +21,7 @@ let authenticateUser = function (req, res, next) {
       if (!decoded) {
         return res.status(401).send({ status: false, message: "Invalid token", err: err.message })
       } else {
-        req.userId = decodeToken.userId;
+        req.userId = decoded.userId
         next();
       }
     });

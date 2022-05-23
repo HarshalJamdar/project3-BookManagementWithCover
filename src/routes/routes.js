@@ -12,11 +12,12 @@ router.post('/register', registerUser)
 
 //==Login User
 router.post('/login', loginUser) 
-
-//==uploading book cover
-router.post('/write-file-aws', upload) 
+ 
 
 //---BOOK APIS---//
+//==Uploading Book Cover
+router.post('/write-file-aws', upload)
+
 //==Create Book Document
 router.post('/books', authenticateUser, createBook)
 

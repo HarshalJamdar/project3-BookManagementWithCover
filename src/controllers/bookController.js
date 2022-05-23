@@ -2,7 +2,65 @@
 const userModel = require("../models/userModel");
 const bookModel = require("../models/bookModel");
 const reviewModel = require("../models/reviewModel");
+const aws = require("aws-sdk")
+const validUrl = require("valid-url")
 const { isValidRequestBody, isValid, isValidDate, isValidISBN, isValidObjectId } = require("../utilities/validator");
+
+
+
+aws.config.update({
+    accessKeyId: "AKIAY3L35MCRUJ6WPO6J",
+    secretAccessKey: "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",
+    region: "ap-south-1"
+})
+
+
+//---UPLOADING BOOK COVER
+let uploadFile= async ( file) =>{
+    return new Promise( function(resolve, reject) {
+     // this function will upload file to aws and return the link
+     let s3= new aws.S3({apiVersion: '2006-03-01'}); // we will be using the s3 service of aws
+ 
+     var uploadParams= {
+         ACL: "public-read",
+         Bucket: "classroom-training-bucket",  
+         Key: "abc/" + file.originalname,  
+         Body: file.buffer
+     }
+ 
+ 
+     s3.upload( uploadParams, function (err, data ){
+         if(err) {
+             return reject({"error": err})
+         }
+         console.log(data)
+         console.log("file uploaded succesfully")
+         return resolve(data.Location)
+     })
+ 
+    })
+ }
+
+ let upload = async function(req, res){
+    try{
+        let files= req.files
+        if(files && files.length>0){
+            let uploadedFileURL= await uploadFile( files[0] )
+            console.log("this is",uploadedFileURL)
+            req["fileUrl"]= uploadedFileURL
+            console.log(req["fileUrl"])
+            res.status(201).send({msg: "file uploaded succesfully", data: uploadedFileURL})
+        }
+        else{
+            res.status(400).send({ msg: "No file found" })
+        }
+        
+    }
+    catch(err){
+        res.status(500).send({msg: err})
+    }
+    
+}
 
 
 //---CREATE BOOK
@@ -11,7 +69,7 @@ const createBook = async function (req, res) {
         //==validating request body==//
         let requestBody = req.body
         if (!isValidRequestBody(requestBody)) return res.status(400).send({ status: false, message: "Invalid request, please provide details" })
-        let { title, excerpt, userId, ISBN, category, subcategory, isDeleted, releasedAt } = requestBody
+        let { title, excerpt, userId, ISBN, category, subcategory, isDeleted, releasedAt,bookCover } = requestBody
 
         //==validating title==//
         if (!isValid(title)) return res.status(400).send({ status: false, message: "Title is a mendatory field" })
@@ -33,6 +91,10 @@ const createBook = async function (req, res) {
         let isUniqueISBN = await bookModel.findOne({ ISBN: ISBN })
         if (isUniqueISBN) return res.status(400).send({ status: false, message: `${ISBN} is already exist` })
 
+        //==validating book cover url==//
+        bookCover=req.body.bookCover.trim()
+        if (!validUrl.isUri(bookCover)) return res.status(400).send({status: false, message: "Invalid long URL"}) 
+
         //==validating category==//   
         if (!isValid(category)) return res.status(400).send({ status: false, message: "category is a mendatory field" })
 
@@ -44,20 +106,8 @@ const createBook = async function (req, res) {
         if (!isValidDate(releasedAt)) return res.status(400).send({ status: false, message: "Please provide date in YYYY-MM-DD format" })
 
         //==Creating Book Document==//   
-        const bookData = { title, excerpt, userId, ISBN, category, subcategory, isDeleted, releasedAt };
+        const bookData = { title, excerpt, userId, ISBN, category, subcategory, isDeleted, releasedAt,bookCover };
         const saveBook = await bookModel.create(bookData)
-
-        // let result={
-        //    _id: saveBook._id,
-        //    title:saveBook.title,
-        //    excerpt:saveBook.excerpt,
-        //    userId:saveBook.userId,
-        //    ISBN:saveBook.ISBN,
-        //    category:saveBook.category,
-        //    subcategory:saveBook.subcategory,
-        //    releasedAt:saveBook.releasedAt
-        // }
-
         return res.status(201).send({ status: true, message: "Success", data: saveBook })
 
     } catch (err) {
@@ -220,6 +270,6 @@ const deleteBookData = async function (req, res) {
 
 //**********************************************************************//
 
-module.exports = { createBook, getBookList, getBookById, deleteBookData, updateBook }
+module.exports = { createBook, getBookList, getBookById, deleteBookData, updateBook,upload }
 
 //**********************************************************************//

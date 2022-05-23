@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { registerUser, loginUser } = require("../controllers/userController")
-const { createBook, getBookList, getBookById, updateBook, deleteBookData } = require("../controllers/bookController")
+const { createBook, getBookList, getBookById, updateBook, deleteBookData,upload } = require("../controllers/bookController")
 const { createReview, deleteReview, updatereview } = require("../controllers/reviewController")
 const { authenticateUser, authorization } = require("../middlewares/auth")
 
@@ -11,8 +11,10 @@ const { authenticateUser, authorization } = require("../middlewares/auth")
 router.post('/register', registerUser)
 
 //==Login User
-router.post('/login', loginUser)
+router.post('/login', loginUser) 
 
+//==uploading book cover
+router.post('/write-file-aws', upload) 
 
 //---BOOK APIS---//
 //==Create Book Document

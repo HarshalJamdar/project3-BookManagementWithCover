@@ -7,7 +7,7 @@ const validUrl = require("valid-url")
 const { isValidRequestBody, isValid, isValidDate, isValidISBN, isValidObjectId } = require("../utilities/validator");
 
 
-
+//---CONNECTING TO AMAZONE-S3
 aws.config.update({
     accessKeyId: "AKIAY3L35MCRUJ6WPO6J",
     secretAccessKey: "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",
@@ -46,9 +46,6 @@ let uploadFile= async ( file) =>{
         let files= req.files
         if(files && files.length>0){
             let uploadedFileURL= await uploadFile( files[0] )
-            console.log("this is",uploadedFileURL)
-            req["fileUrl"]= uploadedFileURL
-            console.log(req["fileUrl"])
             res.status(201).send({msg: "file uploaded succesfully", data: uploadedFileURL})
         }
         else{
